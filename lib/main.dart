@@ -15,6 +15,13 @@ void main() async {
   runApp(MyApp());
 }
 
+class LightAppColors {
+  static const Color primaryColor = Color(0xFF86D668); // Example: Green
+  static const Color primaryTextColor = Color(0xFFFFFFFF); // Example: White
+  static const Color secondaryColor = Color(0xFFFFC107); // Example: Amber
+  static const Color secondaryTextColor = Color(0xFF000000); // Example: Black
+}
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -47,8 +54,12 @@ class MyApp extends StatelessWidget {
             ),
             shadowColor: Colors.lightGreen.withOpacity(0.2),
             // Changed to light green
-            elevation: 3,
+            elevation: 1,
           ),
+        ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: LightAppColors.primaryColor,
+          foregroundColor: LightAppColors.primaryTextColor,
         ),
       ),
       builder: (context, child) {
@@ -67,7 +78,7 @@ class MyApp extends StatelessWidget {
       ],
       locale: const Locale('fa', 'IR'),
       // زبان پیش‌فرض فارسی
-      home: UserDataForm(),
+      home: SafeArea(child: UserDataForm()),
     );
   }
 }

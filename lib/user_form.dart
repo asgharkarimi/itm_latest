@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
+
+import 'report_screen.dart';
 import 'strings.dart';
 import 'user_data.dart';
-import 'report_screen.dart';
 
 class UserDataForm extends StatefulWidget {
   @override
@@ -24,19 +27,24 @@ class _UserDataFormState extends State<UserDataForm> {
 
   String? _selectedIncomeType = Strings.incomeTypeHourly; // Default value
 
-  Future<void> _saveData() async {
+  Future _saveData() async {
     if (_formKey.currentState!.validate() && _selectedIncomeType != null) {
       try {
+        // Remove commas from the rate input before saving
+        final hours = int.tryParse(_hoursController.text) ?? 0;
+        final rate = _rateController.text.replaceAll(',', ''); // Remove commas
+        final parsedRate = int.tryParse(rate) ?? 0;
+
         // Create a new UserData object with default payment status (0 = پرداخت نشده)
         final userData = UserData(
           type: _selectedIncomeType!,
-          hours: int.tryParse(_hoursController.text) ?? 0,
-          rate: _rateController.text,
+          hours: hours,
+          rate: parsedRate.toString(), // Save the unformatted rate
           owner: _ownerController.text,
         );
 
         // Save to Hive
-        final box = Hive.box<UserData>('userDataBox');
+        final box = Hive.box('userDataBox');
         box.add(userData);
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -74,8 +82,7 @@ class _UserDataFormState extends State<UserDataForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(Strings.appTitle),
-        backgroundColor: Colors.lightGreen.shade800,
+        title: Center(child: Text('فرم ورود اطلاعات')),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -87,14 +94,6 @@ class _UserDataFormState extends State<UserDataForm> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    Text(
-                      Strings.formTitle,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.lightGreen.shade800,
-                      ),
-                    ),
                     SizedBox(height: 20),
                     DropdownButtonFormField<String>(
                       value: _selectedIncomeType,
@@ -123,31 +122,40 @@ class _UserDataFormState extends State<UserDataForm> {
                     TextFormField(
                       controller: _hoursController,
                       decoration: InputDecoration(
-                        labelText: _selectedIncomeType == Strings.incomeTypeHectare
-                            ? 'هکتار' // For "کشت هکتاری"
-                            : _selectedIncomeType == Strings.incomeTypeTrailerService
-                            ? 'سرویس تریلی' // For "سرویس تریلی"
-                            : _selectedIncomeType == Strings.incomeTypeFertilizerService
-                            ? 'کود' // For "کودپاش"
-                            : Strings.labelHours, // Default label
-                        hintText: _selectedIncomeType == Strings.incomeTypeHectare
+                        labelText:
+                            _selectedIncomeType == Strings.incomeTypeHectare
+                                ? 'هکتار' // For "کشت هکتاری"
+                                : _selectedIncomeType ==
+                                        Strings.incomeTypeTrailerService
+                                    ? 'سرویس تریلی' // For "سرویس تریلی"
+                                    : _selectedIncomeType ==
+                                            Strings.incomeTypeFertilizerService
+                                        ? 'کود' // For "کودپاش"
+                                        : Strings.labelHours, // Default label
+                        hintText: _selectedIncomeType ==
+                                Strings.incomeTypeHectare
                             ? 'مساحت کاشته شده براساس هکتار' // For "کشت هکتاری"
-                            : _selectedIncomeType == Strings.incomeTypeTrailerService
-                            ? 'تعداد سرویس تریلی' // For "سرویس تریلی"
-                            : _selectedIncomeType == Strings.incomeTypeFertilizerService
-                            ? 'تعداد کیسه کود' // For "کودپاش"
-                            : '', // Default hint
+                            : _selectedIncomeType ==
+                                    Strings.incomeTypeTrailerService
+                                ? 'تعداد سرویس تریلی' // For "سرویس تریلی"
+                                : _selectedIncomeType ==
+                                        Strings.incomeTypeFertilizerService
+                                    ? 'تعداد کیسه کود' // For "کودپاش"
+                                    : '', // Default hint
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return _selectedIncomeType == Strings.incomeTypeHectare
+                          return _selectedIncomeType ==
+                                  Strings.incomeTypeHectare
                               ? 'لطفاً مساحت را وارد کنید'
-                              : _selectedIncomeType == Strings.incomeTypeTrailerService
-                              ? 'لطفاً تعداد سرویس تریلی را وارد کنید'
-                              : _selectedIncomeType == Strings.incomeTypeFertilizerService
-                              ? 'لطفاً تعداد کیسه کود را وارد کنید'
-                              : Strings.errorEnterHours;
+                              : _selectedIncomeType ==
+                                      Strings.incomeTypeTrailerService
+                                  ? 'لطفاً تعداد سرویس تریلی را وارد کنید'
+                                  : _selectedIncomeType ==
+                                          Strings.incomeTypeFertilizerService
+                                      ? 'لطفاً تعداد کیسه کود را وارد کنید'
+                                      : Strings.errorEnterHours;
                         }
                         final parsedValue = int.tryParse(value);
                         if (parsedValue == null || parsedValue < 0) {
@@ -160,26 +168,39 @@ class _UserDataFormState extends State<UserDataForm> {
                     TextFormField(
                       controller: _rateController,
                       decoration: InputDecoration(
-                        labelText: _selectedIncomeType == Strings.incomeTypeHectare
-                            ? 'مبلغ هر هکتار' // For "کشت هکتاری"
-                            : _selectedIncomeType == Strings.incomeTypeTrailerService
-                            ? 'مبلغ هر تریلی' // For "سرویس تریلی"
-                            : _selectedIncomeType == Strings.incomeTypeFertilizerService
-                            ? 'مبلغ هر کیسه کود' // For "کودپاش"
-                            : Strings.labelRate, // Default label
+                        labelText:
+                            _selectedIncomeType == Strings.incomeTypeHectare
+                                ? 'مبلغ هر هکتار' // For "کشت هکتاری"
+                                : _selectedIncomeType ==
+                                        Strings.incomeTypeTrailerService
+                                    ? 'مبلغ هر تریلی' // For "سرویس تریلی"
+                                    : _selectedIncomeType ==
+                                            Strings.incomeTypeFertilizerService
+                                        ? 'مبلغ هر کیسه کود' // For "کودپاش"
+                                        : Strings.labelRate, // Default label
                       ),
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        // Allow only digits
+                        ThousandsSeparatorInputFormatter(),
+                        // Add thousands separator
+                      ],
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return _selectedIncomeType == Strings.incomeTypeHectare
+                          return _selectedIncomeType ==
+                                  Strings.incomeTypeHectare
                               ? 'لطفاً مبلغ هر هکتار را وارد کنید'
-                              : _selectedIncomeType == Strings.incomeTypeTrailerService
-                              ? 'لطفاً مبلغ هر تریلی را وارد کنید'
-                              : _selectedIncomeType == Strings.incomeTypeFertilizerService
-                              ? 'لطفاً مبلغ هر کیسه کود را وارد کنید'
-                              : Strings.errorEnterRate;
+                              : _selectedIncomeType ==
+                                      Strings.incomeTypeTrailerService
+                                  ? 'لطفاً مبلغ هر تریلی را وارد کنید'
+                                  : _selectedIncomeType ==
+                                          Strings.incomeTypeFertilizerService
+                                      ? 'لطفاً مبلغ هر کیسه کود را وارد کنید'
+                                      : Strings.errorEnterRate;
                         }
-                        final parsedValue = int.tryParse(value);
+                        final parsedValue = int.tryParse(value.replaceAll(
+                            ',', '')); // Remove commas for parsing
                         if (parsedValue == null || parsedValue < 0) {
                           return 'لطفاً عدد معتبر وارد کنید';
                         }
@@ -243,5 +264,35 @@ class _UserDataFormState extends State<UserDataForm> {
         ],
       ),
     );
+  }
+}
+
+class ThousandsSeparatorInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = newValue.text;
+
+    if (newValue.selection.baseOffset == 0) {
+      return newValue;
+    }
+
+    final formattedText = _formatAsYouType(text);
+
+    return newValue.copyWith(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: formattedText.length),
+    );
+  }
+
+  String _formatAsYouType(String value) {
+    if (value.isEmpty) return value;
+
+    final removeCommas = value.replaceAll(',', '');
+    final parsedNumber = int.tryParse(removeCommas);
+
+    if (parsedNumber == null) return value;
+
+    return NumberFormat('#,###').format(parsedNumber);
   }
 }
