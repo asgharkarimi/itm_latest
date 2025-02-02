@@ -22,7 +22,7 @@ class _UserDataFormState extends State<UserDataForm> {
     Strings.incomeTypeFertilizerService,
   ];
 
-  String? _selectedIncomeType;
+  String? _selectedIncomeType = Strings.incomeTypeHourly; // Default value
 
   Future<void> _saveData() async {
     if (_formKey.currentState!.validate() && _selectedIncomeType != null) {
@@ -123,12 +123,35 @@ class _UserDataFormState extends State<UserDataForm> {
                     TextFormField(
                       controller: _hoursController,
                       decoration: InputDecoration(
-                        labelText: Strings.labelHours,
+                        labelText: _selectedIncomeType == Strings.incomeTypeHectare
+                            ? 'هکتار' // For "کشت هکتاری"
+                            : _selectedIncomeType == Strings.incomeTypeTrailerService
+                            ? 'سرویس تریلی' // For "سرویس تریلی"
+                            : _selectedIncomeType == Strings.incomeTypeFertilizerService
+                            ? 'کود' // For "کودپاش"
+                            : Strings.labelHours, // Default label
+                        hintText: _selectedIncomeType == Strings.incomeTypeHectare
+                            ? 'مساحت کاشته شده براساس هکتار' // For "کشت هکتاری"
+                            : _selectedIncomeType == Strings.incomeTypeTrailerService
+                            ? 'تعداد سرویس تریلی' // For "سرویس تریلی"
+                            : _selectedIncomeType == Strings.incomeTypeFertilizerService
+                            ? 'تعداد کیسه کود' // For "کودپاش"
+                            : '', // Default hint
                       ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return Strings.errorEnterHours;
+                          return _selectedIncomeType == Strings.incomeTypeHectare
+                              ? 'لطفاً مساحت را وارد کنید'
+                              : _selectedIncomeType == Strings.incomeTypeTrailerService
+                              ? 'لطفاً تعداد سرویس تریلی را وارد کنید'
+                              : _selectedIncomeType == Strings.incomeTypeFertilizerService
+                              ? 'لطفاً تعداد کیسه کود را وارد کنید'
+                              : Strings.errorEnterHours;
+                        }
+                        final parsedValue = int.tryParse(value);
+                        if (parsedValue == null || parsedValue < 0) {
+                          return 'لطفاً عدد معتبر وارد کنید';
                         }
                         return null;
                       },
@@ -137,11 +160,28 @@ class _UserDataFormState extends State<UserDataForm> {
                     TextFormField(
                       controller: _rateController,
                       decoration: InputDecoration(
-                        labelText: Strings.labelRate,
+                        labelText: _selectedIncomeType == Strings.incomeTypeHectare
+                            ? 'مبلغ هر هکتار' // For "کشت هکتاری"
+                            : _selectedIncomeType == Strings.incomeTypeTrailerService
+                            ? 'مبلغ هر تریلی' // For "سرویس تریلی"
+                            : _selectedIncomeType == Strings.incomeTypeFertilizerService
+                            ? 'مبلغ هر کیسه کود' // For "کودپاش"
+                            : Strings.labelRate, // Default label
                       ),
+                      keyboardType: TextInputType.number,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return Strings.errorEnterRate;
+                          return _selectedIncomeType == Strings.incomeTypeHectare
+                              ? 'لطفاً مبلغ هر هکتار را وارد کنید'
+                              : _selectedIncomeType == Strings.incomeTypeTrailerService
+                              ? 'لطفاً مبلغ هر تریلی را وارد کنید'
+                              : _selectedIncomeType == Strings.incomeTypeFertilizerService
+                              ? 'لطفاً مبلغ هر کیسه کود را وارد کنید'
+                              : Strings.errorEnterRate;
+                        }
+                        final parsedValue = int.tryParse(value);
+                        if (parsedValue == null || parsedValue < 0) {
+                          return 'لطفاً عدد معتبر وارد کنید';
                         }
                         return null;
                       },
@@ -173,20 +213,28 @@ class _UserDataFormState extends State<UserDataForm> {
                   onPressed: _saveData,
                   child: Text(
                     Strings.buttonSave,
-                    style: TextStyle(fontSize: 13, color: Colors.white),
+                    style: TextStyle(fontSize: 14, color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
+                    minimumSize: Size(150, 50),
                     backgroundColor: Colors.lightGreen.shade600,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
                 ElevatedButton(
                   onPressed: _navigateToReportScreen,
                   style: ElevatedButton.styleFrom(
+                    minimumSize: Size(150, 50),
                     backgroundColor: Colors.lightGreen.shade700,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   child: Text(
                     'گزارش گیری',
-                    style: TextStyle(fontSize: 13, color: Colors.white),
+                    style: TextStyle(fontSize: 14, color: Colors.white),
                   ),
                 ),
               ],
