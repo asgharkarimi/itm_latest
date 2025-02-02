@@ -12,8 +12,7 @@ class ReportScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('گزارش داده‌ها',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: Text('گزارش داده‌ها', style: TextStyle(fontWeight: FontWeight.bold)),
           backgroundColor: Colors.lightGreen.shade800,
           elevation: 4,
           bottom: TabBar(
@@ -46,13 +45,11 @@ class ReportScreen extends StatelessWidget {
                   return Center(
                     child: Text(
                       'داده‌ای برای نمایش وجود ندارد!',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade600),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade600),
                     ),
                   );
                 }
+
                 final List<UserData> data = snapshot.data!;
                 return ListView.builder(
                   itemCount: data.length,
@@ -60,10 +57,9 @@ class ReportScreen extends StatelessWidget {
                     final item = data[index];
                     final rateAsInt = int.tryParse(item.rate) ?? 0;
                     final totalDebt = item.hours * rateAsInt;
-                    final formattedRate =
-                        NumberFormat('#,###', 'fa_IR').format(rateAsInt);
-                    final formattedTotalDebt =
-                        NumberFormat('#,###', 'fa_IR').format(totalDebt);
+                    final formattedRate = NumberFormat('#,###', 'fa_IR').format(rateAsInt);
+                    final formattedTotalDebt = NumberFormat('#,###', 'fa_IR').format(totalDebt);
+
                     return Card(
                       margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                       color: Colors.transparent,
@@ -79,8 +75,7 @@ class ReportScreen extends StatelessWidget {
                           children: [
                             Text(
                               'نوع درآمد: ${item.type}',
-                              style: TextStyle(
-                                  fontSize: 16, color: Colors.black87),
+                              style: TextStyle(fontSize: 16, color: Colors.black87),
                             ),
                             SizedBox(height: 8),
                             Row(
@@ -89,17 +84,13 @@ class ReportScreen extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     'تعداد ساعت: ${item.hours}',
-                                    style: TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.grey.shade800),
+                                    style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
                                   ),
                                 ),
                                 Expanded(
                                   child: Text(
                                     'مبلغ هر ساعت: $formattedRate تومان',
-                                    style: TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.grey.shade800),
+                                    style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
                                     textAlign: TextAlign.right,
                                   ),
                                 ),
@@ -108,8 +99,7 @@ class ReportScreen extends StatelessWidget {
                             SizedBox(height: 8),
                             Text(
                               'نام صاحب کار: ${item.owner}',
-                              style: TextStyle(
-                                  fontSize: 15, color: Colors.black87),
+                              style: TextStyle(fontSize: 15, color: Colors.black87),
                             ),
                             SizedBox(height: 8),
                             Row(
@@ -119,9 +109,7 @@ class ReportScreen extends StatelessWidget {
                                   'وضعیت پرداخت: ${item.paymentStatusText}',
                                   style: TextStyle(
                                     fontSize: 15,
-                                    color: item.paymentStatus == 1
-                                        ? Colors.green
-                                        : Colors.red,
+                                    color: item.paymentStatus == 1 ? Colors.green : Colors.red,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -129,8 +117,7 @@ class ReportScreen extends StatelessWidget {
                                   value: item.paymentStatus == 1,
                                   activeColor: Colors.green,
                                   onChanged: (value) {
-                                    _updatePaymentStatus(
-                                        index, value ? 1 : 0, context);
+                                    _updatePaymentStatus(index, value ? 1 : 0, context);
                                   },
                                 ),
                               ],
@@ -157,7 +144,7 @@ class ReportScreen extends StatelessWidget {
               },
             ),
 
-// Second tab: نمودار درامدی
+            // Second tab: نمودار درامدی
             FutureBuilder<List<UserData>>(
               future: _fetchDataFromHive(),
               builder: (context, snapshot) {
@@ -178,77 +165,111 @@ class ReportScreen extends StatelessWidget {
                   return Center(
                     child: Text(
                       'داده‌ای برای نمایش وجود ندارد!',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade600),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade600),
                     ),
                   );
                 }
+
                 final List<UserData> data = snapshot.data!;
                 final double receivedIncome = data
                     .where((item) => item.paymentStatus == 1)
-                    .map((item) => int.tryParse(item.rate) ?? 0 * item.hours)
+                    .map((item) => (int.tryParse(item.rate) ?? 0) * item.hours)
                     .reduce((a, b) => a + b)
                     .toDouble();
                 final double unreceivedIncome = data
                     .where((item) => item.paymentStatus == 0)
-                    .map((item) => int.tryParse(item.rate) ?? 0 * item.hours)
+                    .map((item) => (int.tryParse(item.rate) ?? 0) * item.hours)
                     .reduce((a, b) => a + b)
                     .toDouble();
                 final totalIncome = receivedIncome + unreceivedIncome;
 
+                // Filter unpaid users for the list view
+                final List<UserData> unpaidUsers = data.where((item) => item.paymentStatus == 0).toList();
+
                 return Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(8.0),
                   child: Column(
                     children: [
+                      // Title for the chart section
                       Text(
                         'نسبت درامد وصول شده به درامد وصول نشده',
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 16),
-                      // Constrain the PieChart using a SizedBox
+                      SizedBox(height: 14),
+
+                      // Pie Chart
                       SizedBox(
-                        height: 250, // Set a fixed height for the chart
+                        height: 200, // Set a fixed height for the chart
                         child: PieChart(
                           PieChartData(
                             sections: [
                               PieChartSectionData(
                                 value: receivedIncome,
                                 color: Colors.green.shade400,
-                                title:
-                                    '${(receivedIncome / totalIncome * 100).toStringAsFixed(1)}%',
-                                titleStyle: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white),
+                                title: '${(receivedIncome / totalIncome * 100).toStringAsFixed(1)}%',
+                                titleStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                               ),
                               PieChartSectionData(
                                 value: unreceivedIncome,
                                 color: Colors.orange.shade400,
-                                title:
-                                    '${(unreceivedIncome / totalIncome * 100).toStringAsFixed(1)}%',
-                                titleStyle: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white),
+                                title: '${(unreceivedIncome / totalIncome * 100).toStringAsFixed(1)}%',
+                                titleStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                               ),
                             ],
-                            centerSpaceRadius: 40,
-                            // Add space in the center of the pie chart
+                            centerSpaceRadius: 40, // Add space in the center of the pie chart
                             startDegreeOffset: -90, // Start from the top
                           ),
                         ),
                       ),
+
+                      // Legend for the pie chart
                       SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           _buildLegend('درامد وصول شده', Colors.green.shade400),
-                          _buildLegend(
-                              'درامد وصول نشده', Colors.orange.shade400),
+                          _buildLegend('درامد وصول نشده', Colors.orange.shade400),
                         ],
+                      ),
+
+                      // Title for the list section
+                      SizedBox(height: 16),
+                      Divider(),
+                      Text(
+                        'لیست افراد بدهکار',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 8),
+
+                      // List of unpaid users
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: unpaidUsers.length,
+                          itemBuilder: (context, index) {
+                            final item = unpaidUsers[index];
+                            final rateAsInt = int.tryParse(item.rate) ?? 0;
+                            final totalDebt = item.hours * rateAsInt;
+                            final formattedTotalDebt = NumberFormat('#,###', 'fa_IR').format(totalDebt);
+
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: Colors.orange.shade100,
+                                child: Text(
+                                  (index + 1).toString(), // Display serial number
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              title: Text(
+                                'نام: ${item.owner}',
+                                style: TextStyle(fontSize: 16, color: Colors.black87),
+                              ),
+                              subtitle: Text(
+                                'مبلغ بدهی: $formattedTotalDebt تومان',
+                                style: TextStyle(fontSize: 14, color: Colors.red.shade700),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),
