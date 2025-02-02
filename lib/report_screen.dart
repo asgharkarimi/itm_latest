@@ -1,139 +1,282 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart'; // Import intl package for number formatting
+
 import 'user_data.dart';
 
 class ReportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('گزارش داده‌ها', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.lightGreen.shade800,
-        elevation: 4, // Add shadow to the app bar
-      ),
-      body: FutureBuilder<List<UserData>>(
-        future: _fetchDataFromHive(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(
-                color: Colors.lightGreen.shade700, // Customize progress indicator color
-              ),
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'خطا در بازیابی داده: ${snapshot.error}',
-                style: TextStyle(fontSize: 16, color: Colors.red),
-              ),
-            );
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Text(
-                'داده‌ای برای نمایش وجود ندارد!',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade600),
-              ),
-            );
-          }
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('گزارش داده‌ها',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: Colors.lightGreen.shade800,
+          elevation: 4,
+          bottom: TabBar(
+            tabs: [
+              Tab(text: 'لیست کارها'),
+              Tab(text: 'نمودار درامدی'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            // First tab: لیست کارها
+            FutureBuilder<List<UserData>>(
+              future: _fetchDataFromHive(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.lightGreen.shade700,
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'خطا در بازیابی داده: ${snapshot.error}',
+                      style: TextStyle(fontSize: 16, color: Colors.red),
+                    ),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'داده‌ای برای نمایش وجود ندارد!',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade600),
+                    ),
+                  );
+                }
+                final List<UserData> data = snapshot.data!;
+                return ListView.builder(
+                  itemCount: data.length,
+                  itemBuilder: (context, index) {
+                    final item = data[index];
+                    final rateAsInt = int.tryParse(item.rate) ?? 0;
+                    final totalDebt = item.hours * rateAsInt;
+                    final formattedRate =
+                        NumberFormat('#,###', 'fa_IR').format(rateAsInt);
+                    final formattedTotalDebt =
+                        NumberFormat('#,###', 'fa_IR').format(totalDebt);
+                    return Card(
+                      margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                      color: Colors.transparent,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.grey.shade300, width: 1),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'نوع درآمد: ${item.type}',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.black87),
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'تعداد ساعت: ${item.hours}',
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.grey.shade800),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'مبلغ هر ساعت: $formattedRate تومان',
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.grey.shade800),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'نام صاحب کار: ${item.owner}',
+                              style: TextStyle(
+                                  fontSize: 15, color: Colors.black87),
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'وضعیت پرداخت: ${item.paymentStatusText}',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: item.paymentStatus == 1
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Switch(
+                                  value: item.paymentStatus == 1,
+                                  activeColor: Colors.green,
+                                  onChanged: (value) {
+                                    _updatePaymentStatus(
+                                        index, value ? 1 : 0, context);
+                                  },
+                                ),
+                              ],
+                            ),
+                            Divider(
+                              thickness: 1,
+                              color: Colors.grey.shade400,
+                              height: 16,
+                            ),
+                            Text(
+                              'جمع بدهکاری: $formattedTotalDebt تومان',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
 
-          final List<UserData> data = snapshot.data!;
-          return ListView.builder(
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              final item = data[index];
+// Second tab: نمودار درامدی
+            FutureBuilder<List<UserData>>(
+              future: _fetchDataFromHive(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.lightGreen.shade700,
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'خطا در بازیابی داده: ${snapshot.error}',
+                      style: TextStyle(fontSize: 16, color: Colors.red),
+                    ),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'داده‌ای برای نمایش وجود ندارد!',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade600),
+                    ),
+                  );
+                }
+                final List<UserData> data = snapshot.data!;
+                final double receivedIncome = data
+                    .where((item) => item.paymentStatus == 1)
+                    .map((item) => int.tryParse(item.rate) ?? 0 * item.hours)
+                    .reduce((a, b) => a + b)
+                    .toDouble();
+                final double unreceivedIncome = data
+                    .where((item) => item.paymentStatus == 0)
+                    .map((item) => int.tryParse(item.rate) ?? 0 * item.hours)
+                    .reduce((a, b) => a + b)
+                    .toDouble();
+                final totalIncome = receivedIncome + unreceivedIncome;
 
-              // Calculate جمع بدهکاری safely
-              final rateAsInt = int.tryParse(item.rate) ?? 0; // Default to 0 if parsing fails
-              final totalDebt = item.hours * rateAsInt;
-
-              // Format values with commas
-              final formattedRate = NumberFormat('#,###', 'fa_IR').format(rateAsInt); // Format مبلغ هر ساعت
-              final formattedTotalDebt = NumberFormat('#,###', 'fa_IR').format(totalDebt); // Format جمع بدهکاری
-
-              return Card(
-                margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8), // Add margins for spacing
-                color: Colors.transparent, // Transparent background
-                elevation: 0, // No shadow
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12), // Rounded corners
-                  side: BorderSide(color: Colors.grey.shade300, width: 1), // Light border
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0), // Increased padding for better readability
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'نوع درآمد: ${item.type}',
-                        style: TextStyle(fontSize: 16, color: Colors.black87),
-                      ),
-                      SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'تعداد ساعت: ${item.hours}',
-                              style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              'مبلغ هر ساعت: $formattedRate تومان', // Display formatted مبلغ هر ساعت
-                              style: TextStyle(fontSize: 15, color: Colors.grey.shade800),
-                              textAlign: TextAlign.right, // Align text to the right
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'نام صاحب کار: ${item.owner}',
-                        style: TextStyle(fontSize: 15, color: Colors.black87),
-                      ),
-                      SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'وضعیت پرداخت: ${item.paymentStatusText}',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: item.paymentStatus == 1 ? Colors.green : Colors.red,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Switch(
-                            value: item.paymentStatus == 1, // True if paid, False if unpaid
-                            activeColor: Colors.green,
-                            onChanged: (value) {
-                              _updatePaymentStatus(index, value ? 1 : 0, context);
-                            },
-                          ),
-                        ],
-                      ),
-                      Divider(
-                        thickness: 1,
-                        color: Colors.grey.shade400,
-                        height: 16,
-                      ),
-                      Text(
-                        'جمع بدهکاری: $formattedTotalDebt تومان', // Display formatted جمع بدهکاری
+                        'نسبت درامد وصول شده به درامد وصول نشده',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red.shade700,
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 16),
+                      // Constrain the PieChart using a SizedBox
+                      SizedBox(
+                        height: 250, // Set a fixed height for the chart
+                        child: PieChart(
+                          PieChartData(
+                            sections: [
+                              PieChartSectionData(
+                                value: receivedIncome,
+                                color: Colors.green.shade400,
+                                title:
+                                    '${(receivedIncome / totalIncome * 100).toStringAsFixed(1)}%',
+                                titleStyle: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                              ),
+                              PieChartSectionData(
+                                value: unreceivedIncome,
+                                color: Colors.orange.shade400,
+                                title:
+                                    '${(unreceivedIncome / totalIncome * 100).toStringAsFixed(1)}%',
+                                titleStyle: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
+                              ),
+                            ],
+                            centerSpaceRadius: 40,
+                            // Add space in the center of the pie chart
+                            startDegreeOffset: -90, // Start from the top
+                          ),
                         ),
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildLegend('درامد وصول شده', Colors.green.shade400),
+                          _buildLegend(
+                              'درامد وصول نشده', Colors.orange.shade400),
+                        ],
                       ),
                     ],
                   ),
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  /// Build a legend for the pie chart
+  Widget _buildLegend(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          color: color,
+        ),
+        SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(fontSize: 14, color: Colors.black87),
+        ),
+      ],
     );
   }
 
@@ -151,12 +294,10 @@ class ReportScreen extends StatelessWidget {
   void _updatePaymentStatus(int index, int status, BuildContext context) async {
     try {
       final box = Hive.box<UserData>('userDataBox');
-      final key = box.keyAt(index)!; // Get the key for the item at the given index
+      final key = box.keyAt(index)!;
       final updatedItem = box.get(key)!;
-      updatedItem.setPaymentStatus(status); // Update payment status
-      box.put(key, updatedItem); // Save changes back to the database
-
-      // Show success message
+      updatedItem.setPaymentStatus(status);
+      box.put(key, updatedItem);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(status == 1 ? 'پرداخت شده' : 'پرداخت نشده'),
