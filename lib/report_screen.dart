@@ -37,7 +37,7 @@ class ReportScreen extends StatelessWidget {
                       Text('تعداد ساعت: ${item.hours}', style: TextStyle(fontSize: 16)),
                       Text('مبلغ هر ساعت: ${item.rate}', style: TextStyle(fontSize: 16)),
                       Text('نام صاحب کار: ${item.owner}', style: TextStyle(fontSize: 16)),
-                      Text('وضعیت پرداخت: ${item.status}', style: TextStyle(fontSize: 16)),
+                      Text('وضعیت پرداخت: ${item.paymentStatusText}', style: TextStyle(fontSize: 16)),
                       Divider(),
                     ],
                   ),

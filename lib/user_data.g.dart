@@ -21,7 +21,7 @@ class UserDataAdapter extends TypeAdapter<UserData> {
       hours: fields[1] as int,
       rate: fields[2] as String,
       owner: fields[3] as String,
-      status: fields[4] as String,
+      paymentStatus: fields[4] as int,
     );
   }
 
@@ -38,7 +38,7 @@ class UserDataAdapter extends TypeAdapter<UserData> {
       ..writeByte(3)
       ..write(obj.owner)
       ..writeByte(4)
-      ..write(obj.status);
+      ..write(obj.paymentStatus);
   }
 
   @override

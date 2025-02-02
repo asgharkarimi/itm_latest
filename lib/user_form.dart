@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-
-import 'report_screen.dart'; // Import the new report screen
 import 'strings.dart';
 import 'user_data.dart';
+import 'report_screen.dart';
 
 class UserDataForm extends StatefulWidget {
   @override
@@ -15,7 +14,6 @@ class _UserDataFormState extends State<UserDataForm> {
   final _hoursController = TextEditingController();
   final _rateController = TextEditingController();
   final _ownerController = TextEditingController();
-  final _statusController = TextEditingController();
 
   final List<String> _incomeTypes = [
     Strings.incomeTypeHourly,
@@ -29,13 +27,12 @@ class _UserDataFormState extends State<UserDataForm> {
   Future<void> _saveData() async {
     if (_formKey.currentState!.validate() && _selectedIncomeType != null) {
       try {
-        // Create a new UserData object
+        // Create a new UserData object with default payment status (0 = پرداخت نشده)
         final userData = UserData(
           type: _selectedIncomeType!,
           hours: int.tryParse(_hoursController.text) ?? 0,
           rate: _rateController.text,
           owner: _ownerController.text,
-          status: _statusController.text,
         );
 
         // Save to Hive
@@ -162,19 +159,6 @@ class _UserDataFormState extends State<UserDataForm> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 15),
-                    TextFormField(
-                      controller: _statusController,
-                      decoration: InputDecoration(
-                        labelText: Strings.labelStatus,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return Strings.errorEnterStatus;
-                        }
-                        return null;
-                      },
-                    ),
                   ],
                 ),
               ),
@@ -189,7 +173,7 @@ class _UserDataFormState extends State<UserDataForm> {
                   onPressed: _saveData,
                   child: Text(
                     Strings.buttonSave,
-                    style: TextStyle(fontSize: 18, color: Colors.white),
+                    style: TextStyle(fontSize: 13, color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.lightGreen.shade600,
@@ -202,7 +186,7 @@ class _UserDataFormState extends State<UserDataForm> {
                   ),
                   child: Text(
                     'گزارش گیری',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
+                    style: TextStyle(fontSize: 13, color: Colors.white),
                   ),
                 ),
               ],

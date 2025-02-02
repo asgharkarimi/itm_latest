@@ -17,13 +17,21 @@ class UserData {
   final String owner;
 
   @HiveField(4)
-  final String status;
+  int paymentStatus; // Payment status (0 = unpaid, 1 = paid)
 
   UserData({
     required this.type,
     required this.hours,
     required this.rate,
     required this.owner,
-    required this.status,
+    this.paymentStatus = 0, // Default: 0 (پرداخت نشده)
   });
+
+  String get paymentStatusText {
+    return paymentStatus == 1 ? 'پرداخت شده' : 'پرداخت نشده';
+  }
+
+  void setPaymentStatus(int status) {
+    paymentStatus = status;
+  }
 }
