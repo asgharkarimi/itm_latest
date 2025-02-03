@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'hive_service.dart';
 import 'user_data.dart';
 import 'user_form.dart';
 
 void main() async {
   // Initialize Hive
   await Hive.initFlutter();
-  // Register adapter for UserData
+  await HiveService.init(); // Initialize the HiveService
+
+  // Register adapters (if needed)
   Hive.registerAdapter(UserDataAdapter());
-  // Open box
-  await Hive.openBox<UserData>('userDataBox');
   runApp(MyApp());
 }
 
