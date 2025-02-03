@@ -1,20 +1,21 @@
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'user_data.dart';
 
 class HiveService {
-  static late Box<dynamic> _userDataBox;
+  static late Box<UserData> _userDataBox;
 
-  // Private constructor to prevent instantiation
-  HiveService._();
-
-  // Static method to initialize the service
   static Future<void> init() async {
-    await Hive.initFlutter(); // Initialize Hive
-    _userDataBox = await Hive.openBox('userDataBox'); // Open the box
+    await Hive.initFlutter();
+    Hive.registerAdapter(UserDataAdapter());
+    try {
+      _userDataBox = await Hive.openBox<UserData>('userDataBox');
+    } catch (e) {
+      print("Hive box opening failed: $e");
+      await Hive.deleteBoxFromDisk('userDataBox'); // Delete corrupted box
+      _userDataBox = await Hive.openBox<UserData>('userDataBox');
+    }
   }
 
-  // Method to get the box instance
-  static Box<dynamic> getUserDataBox() {
-    return _userDataBox;
-  }
+  static Box<UserData> getUserDataBox() => _userDataBox;
 }

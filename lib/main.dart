@@ -12,7 +12,9 @@ void main() async {
   await HiveService.init(); // Initialize the HiveService
 
   // Register adapters (if needed)
-  Hive.registerAdapter(UserDataAdapter());
+  if (!Hive.isAdapterRegistered(0)) {
+    Hive.registerAdapter(UserDataAdapter());
+  }
   runApp(MyApp());
 }
 
